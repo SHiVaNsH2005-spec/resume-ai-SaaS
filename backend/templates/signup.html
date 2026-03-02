@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signup</title>
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: Arial;
+            color: white;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 15px;
+            width: 350px;
+            box-shadow: 0 0 20px rgba(0,234,255,0.3);
+        }
+
+        h2 {
+            text-align: center;
+            color: #00eaff;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 6px;
+            background: #00eaff;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        a {
+            color: #00eaff;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Create Account</h2>
+
+    <input type="email" id="signupEmail" placeholder="Email">
+    <input type="password" id="signupPassword" placeholder="Password">
+
+    <button onclick="signupUser()">Signup</button>
+
+    <p style="text-align:center; margin-top:15px;">
+        Already have an account?
+        <a href="/login-page">Login</a>
+    </p>
+</div>
+
+<script>
+async function signupUser(){
+
+    const email = document.getElementById("signupEmail").value;
+    const password = document.getElementById("signupPassword").value;
+
+    const res = await fetch("/signup", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if(res.ok){
+        alert("Signup successful");
+        window.location.href = "/login-page";
+    } else {
+        alert("Error creating account");
+    }
+}
+</script>
+
+</body>
+</html>

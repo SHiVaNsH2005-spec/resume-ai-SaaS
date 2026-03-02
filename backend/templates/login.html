@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            font-family: Arial;
+            color: white;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 15px;
+            width: 350px;
+            box-shadow: 0 0 20px rgba(0,234,255,0.3);
+        }
+
+        h2 {
+            text-align: center;
+            color: #00eaff;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 6px;
+            background: #00eaff;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        a {
+            color: #00eaff;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Login</h2>
+
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+
+    <button onclick="loginUser()">Login</button>
+
+    <p style="text-align:center; margin-top:15px;">
+        Don't have an account?
+        <a href="/signup-page">Signup</a>
+    </p>
+</div>
+
+<script>
+async function loginUser(){
+
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    const res = await fetch("/login", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if(res.ok){
+        window.location.href = "/dashboard";
+    } else {
+        alert(data.message);
+    }
+}
+</script>
+
+<script>
+
+async function loginUser() {
+
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        window.location.href = "/dashboard";
+    } else {
+        triggerAccessDenied();   // 💀 THIS LINE
+    }
+}
+
+function triggerAccessDenied() {
+
+    const overlay = document.createElement("div");
+
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(255,0,0,0.95)";
+    overlay.style.color = "white";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.fontSize = "40px";
+    overlay.style.fontWeight = "bold";
+    overlay.style.zIndex = "9999";
+
+    overlay.innerText = "ACCESS DENIED";
+
+    document.body.appendChild(overlay);
+
+    const errorSound = new Audio("https://www.soundjay.com/button/sounds/button-10.mp3");
+    errorSound.play();
+
+    setTimeout(() => {
+        overlay.remove();
+    }, 2000);
+}
+
+</script>
+</body>
+</html>

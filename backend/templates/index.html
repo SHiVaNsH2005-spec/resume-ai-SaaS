@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .card {
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #00ff00;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 0 20px #00ff00;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 0 40px #00ff00;
+            transform: scale(1.02);
+        }
+
+        textarea, input[type="file"], input {
+            background: black;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: black;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: black;
+            box-shadow: 0 0 20px #00ff00;
+        }
+
+        #bootScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            padding: 40px;
+            z-index: 9999;
+        }
+
+        #bootText {
+            white-space: pre-line;
+            font-size: 18px;
+        }
+
+        .glitch {
+            font-size: 28px;
+            font-weight: bold;
+            position: relative;
+            color: #00ff00;
+            animation: flicker 0.3s infinite alternate;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            left: 0;
+            width: 100%;
+        }
+
+        .glitch::before {
+            color: red;
+            animation: glitchTop 0.3s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            color: cyan;
+            animation: glitchBottom 0.3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitchTop {
+            0% { transform: translate(2px, -2px); }
+            100% { transform: translate(-2px, 2px); }
+        }
+
+        @keyframes glitchBottom {
+            0% { transform: translate(-2px, 2px); }
+            100% { transform: translate(2px, -2px); }
+        }
+
+        @keyframes flicker {
+            from { opacity: 1; }
+            to { opacity: 0.8; }
+        }
+
+        #heatmap span {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px;
+            background: #00eaff;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="bootScreen">
+    <pre id="bootText"></pre>
+</div>
+
+<h2 style="margin-left:20px;">🚀 Resume Dashboard</h2>
+
+<div class="card">
+    <input type="file" id="resumeInput">
+    <textarea id="jobDescription" rows="4" placeholder="Paste Job Description"></textarea>
+    <button onclick="analyze()">Analyze</button>
+    <button onclick="saveReport()">Save Report</button>
+</div>
+
+<div class="card">
+    <h3>Results</h3>
+    <div id="result"></div>
+    <canvas id="scoreChart" height="120"></canvas>
+</div>
+
+<div class="card">
+    <h3>Skill Heatmap</h3>
+    <div id="heatmap"></div>
+</div>
+
+<div class="card">
+    <h3>> Terminal Command</h3>
+    <input type="text" id="terminalInput" placeholder="Enter command...">
+    <pre id="terminalOutput"></pre>
+</div>
+
+<script>
+
+/* ================= AI VOICE ================= */
+function speakAI(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 1;
+    speech.pitch = 1;
+    speech.volume = 1;
+    speech.lang = "en-US";
+    window.speechSynthesis.speak(speech);
+}
+
+/* ================= BOOT SEQUENCE ================= */
+
+const bootLines = [
+    "Initializing AI Resume Engine...",
+    "Loading Neural Modules...",
+    "Connecting Secure Server...",
+    "Authenticating...",
+    "System Ready."
+];
+
+const bootText = document.getElementById("bootText");
+const bootScreen = document.getElementById("bootScreen");
+
+let lineIndex = 0;
+
+function typeLine(text, callback) {
+    let i = 0;
+    const interval = setInterval(() => {
+        bootText.innerHTML += text.charAt(i);
+        i++;
+        if (i >= text.length) {
+            clearInterval(interval);
+            bootText.innerHTML += "\n";
+            setTimeout(callback, 400);
+        }
+    }, 30);
+}
+
+function runBoot() {
+    if (lineIndex < bootLines.length) {
+        typeLine(bootLines[lineIndex], () => {
+            lineIndex++;
+            runBoot();
+        });
+    } else {
+        bootText.innerHTML += `<span class="glitch" data-text="ACCESS GRANTED">ACCESS GRANTED</span>\n`;
+        speakAI("System ready. Welcome to AI Resume Terminal.");
+        setTimeout(() => {
+            bootScreen.style.display = "none";
+        }, 1500);
+    }
+}
+
+window.addEventListener("load", runBoot);
+
+
+/* ================= ANALYZE ================= */
+
+let dataStore = {};
+let chartInstance = null;
+
+async function analyze() {
+
+    const fileInput = document.getElementById("resumeInput");
+    const jdText = document.getElementById("jobDescription").value;
+
+    if (!fileInput.files.length) {
+        alert("Upload file first");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("resume", fileInput.files[0]);
+    formData.append("jobDescription", jdText);
+
+    const res = await fetch("/analyze", {
+        method: "POST",
+        body: formData,
+        credentials: "include"
+    });
+
+    if (res.status === 401) {
+        window.location.href = "/login-page";
+        return;
+    }
+
+    dataStore = await res.json();
+
+    speakAI("Analysis complete. Resume strength is " + dataStore.strength_label);
+
+    updateResults();
+    drawChart();
+    renderHeatmap(dataStore.heatmap_data);
+}
+
+function updateResults() {
+    document.getElementById("result").innerHTML = `
+        <b>Final Score:</b> ${dataStore.final_score}<br>
+        <b>Skills Score:</b> ${dataStore.skills_score}<br>
+        <b>ATS Score:</b> ${dataStore.ats_score}<br>
+        <b>Cosine Similarity:</b> ${dataStore.cosine_match_score}<br>
+        <b>JD Match Score:</b> ${dataStore.intelligent_jd_score}<br><br>
+        <b>Suggestions:</b><br>
+        ${dataStore.enhanced_text}
+    `;
+}
+
+function drawChart() {
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(document.getElementById("scoreChart"), {
+        type: "bar",
+        data: {
+            labels: ["Final", "Skills", "ATS", "Cosine", "JD"],
+            datasets: [{
+                data: [
+                    dataStore.final_score,
+                    dataStore.skills_score,
+                    dataStore.ats_score,
+                    dataStore.cosine_match_score,
+                    dataStore.intelligent_jd_score
+                ],
+                backgroundColor: "#00eaff"
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+
+function renderHeatmap(data) {
+    const heatmap = document.getElementById("heatmap");
+    heatmap.innerHTML = "";
+
+    if (!data) return;
+
+    data.forEach(skill => {
+        const span = document.createElement("span");
+        span.innerText = skill.skill + " (" + skill.count + ")";
+        heatmap.appendChild(span);
+    });
+}
+
+async function saveReport() {
+    const res = await fetch("/save_report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(dataStore)
+    });
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Resume_Report.pdf";
+    a.click();
+}
+
+/* ================= TERMINAL ================= */
+
+const terminalInput = document.getElementById("terminalInput");
+const terminalOutput = document.getElementById("terminalOutput");
+
+terminalInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+
+        const userInput = terminalInput.value.trim();
+        const command = userInput.toLowerCase();
+
+        terminalOutput.innerHTML += "\n> " + userInput + "\n";
+
+        const response = processAICommand(command);
+
+        typeEffect(terminalOutput, response + "\n", 20);
+        
+  function typeEffect(element, text, speed = 30) {
+    let i = 0;
+    function typing() {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(typing, speed);
+        }
+    }
+    typing();
+}
+
+        speakAI(response);
+
+        terminalInput.value = "";
+    }
+});
+
+function processAICommand(command) {
+
+    if (!dataStore || !dataStore.final_score) {
+        return "No resume analysis available. Please run analysis first.";
+    }
+
+    if (command.includes("score") || command.includes("strong")) {
+        return "Your final resume score is " + dataStore.final_score +
+               ". Resume strength is " + dataStore.strength_label + ".";
+    }
+
+    if (command.includes("missing") || command.includes("gap")) {
+        return "You are missing: " + 
+               (dataStore.missing_skills?.join(", ") || "No major gaps detected.");
+    }
+
+    if (command.includes("improve") || command.includes("better")) {
+        return dataStore.enhanced_text || 
+               "Focus on adding measurable achievements and technical depth.";
+    }
+
+    if (command.includes("skills")) {
+        return "Detected skills: " + 
+               (dataStore.matched_skills?.join(", ") || "No technical skills detected.");
+    }
+
+    if (command.includes("job") || command.includes("jd")) {
+        return "Your JD alignment score is " + dataStore.intelligent_jd_score + ".";
+    }
+
+    if (command.includes("ats")) {
+        return "Your ATS score is " + dataStore.ats_score + ".";
+    }
+
+    if (command.includes("who are you")) {
+        return "I am your AI Resume Assistant. I analyze, optimize, and guide.";
+    }
+
+    if (command.includes("help")) {
+        return "Try asking about score, skills, improvement, ATS, or job alignment.";
+    }
+
+    return "I understand resume-related queries. Try asking about score, skills, or improvements.";
+}
+
+</script>
+
+</body>
+</html>
