@@ -47,7 +47,9 @@ import os
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
 
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
@@ -64,7 +66,7 @@ class User(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 # ====================== ROUTES ======================
 
@@ -75,6 +77,10 @@ def home():
 @app.route("/login-page")
 def login_page():
     return render_template("login.html")
+
+@app.route("/signup-page")
+def signup_page():
+    return render_template("signup.html")
 
 @app.route("/dashboard")
 @login_required
